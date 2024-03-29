@@ -104,15 +104,27 @@ struct CircularCalorieTracker: View {
                 .stroke(Color.blue, lineWidth: 10)
                 .frame(width: 200, height: 200)
                 .rotationEffect(Angle(degrees: -90))
-            
-            Text("\(calorieIntake, specifier: "%.0f")/2500")
-                .font(.title)
-                .fontWeight(.bold)
                 .onTapGesture {
                     withAnimation {
                         isFoodListVisible.toggle() // Переключение видимости списка еды по касанию
                     }
                 }
+            
+            Text("\(calorieIntake, specifier: "%.0f")/2500")
+                .font(.title)
+                .fontWeight(.bold)
+            
+            // Добавляем круг в качестве кнопки
+            Button(action: {
+                withAnimation {
+                    isFoodListVisible.toggle() // Переключение видимости списка еды
+                }
+            }) {
+                Circle()
+                    .foregroundColor(.clear)
+                    .frame(width: 200, height: 200)
+                    .opacity(0.001) // Скрываем круг, чтобы он был невидимым, но активным для нажатия
+            }
         }
         .sheet(isPresented: $isFoodListVisible) {
             // Вид списка еды
@@ -274,15 +286,15 @@ struct ProgramsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     CategoryView(categoryName: "Спина", programs: [
-                        Program(name: "Программа для силового развития спины", image: "back_workout"),
-                        Program(name: "Программа для гипертрофии спины", image: "back_hypertrophy"),
-                        Program(name: "Программа для выносливости спины", image: "back_endurance")
+                        Program(name: "Программа для силового развития спины", image: "back_workout", category: "Спина", trainingProgram: TrainingProgram(daysPerWeek: 3, exercises: [Exercise(name: "Подтягивания", description: "Описание упражнения", sets: 3, reps: 10)])),
+                        Program(name: "Программа для гипертрофии спины", image: "back_hypertrophy", category: "Спина", trainingProgram: TrainingProgram(daysPerWeek: 5, exercises: [Exercise(name: "Подтягивания", description: "Описание упражнения", sets: 4, reps: 8)])),
+                        Program(name: "Программа для выносливости спины", image: "back_endurance", category: "Спина", trainingProgram: TrainingProgram(daysPerWeek: 3, exercises: [Exercise(name: "Бег", description: "Описание упражнения", sets: 1, reps: 30)]))
                     ])
                     
                     CategoryView(categoryName: "Бицепс", programs: [
-                        Program(name: "Программа для силового развития бицепса", image: "biceps_workout"),
-                        Program(name: "Программа для гипертрофии бицепса", image: "biceps_hypertrophy"),
-                        Program(name: "Программа для выносливости бицепса", image: "biceps_endurance")
+                        Program(name: "Программа для силового развития бицепса", image: "biceps_workout", category: "Бицепс", trainingProgram: TrainingProgram(daysPerWeek: 4, exercises: [Exercise(name: "Подъемы штанги", description: "Описание упражнения", sets: 5, reps: 8)])),
+                        Program(name: "Программа для гипертрофии бицепса", image: "biceps_hypertrophy", category: "Бицепс", trainingProgram: TrainingProgram(daysPerWeek: 3, exercises: [Exercise(name: "Молотки", description: "Описание упражнения", sets: 4, reps: 10)])),
+                        Program(name: "Программа для выносливости бицепса", image: "biceps_endurance", category: "Бицепс", trainingProgram: TrainingProgram(daysPerWeek: 2, exercises: [Exercise(name: "Обратные подъемы", description: "Описание упражнения", sets: 3, reps: 15)]))
                     ])
                 }
                 .padding()
@@ -291,6 +303,7 @@ struct ProgramsView: View {
         }
     }
 }
+
 
 struct CategoryView: View {
     var categoryName: String
@@ -340,7 +353,25 @@ struct Program: Identifiable { // Добавлено соответствие п
     var id = UUID() // Создание уникального идентификатора
     var name: String
     var image: String
+    var category: String
+    var trainingProgram: TrainingProgram // Добавляем программу тренировок
 }
+
+
+struct TrainingProgram {
+    var daysPerWeek: Int
+    var exercises: [Exercise]
+}
+
+struct Exercise: Hashable {
+    var id = UUID() // Добавляем идентификатор для уникальности
+    
+    var name: String
+    var description: String
+    var sets: Int
+    var reps: Int
+}
+
 
 struct ProgramDetailView: View {
     var program: Program
@@ -352,11 +383,30 @@ struct ProgramDetailView: View {
                 .fontWeight(.bold)
                 .padding()
             
-            Spacer()
+            Text("Категория: \(program.category)")
+                .font(.headline)
+                .padding(.bottom)
+            
+            Text("Тренировочная программа:")
+                .font(.headline)
+                .padding(.bottom)
+            
+            ForEach(program.trainingProgram.exercises, id: \.self) { exercise in
+                VStack(alignment: .leading) {
+                    Text(exercise.name)
+                        .font(.subheadline)
+                    Text("Описание: \(exercise.description)")
+                        .font(.caption)
+                    Text("Подходы: \(exercise.sets), Повторения: \(exercise.reps)")
+                        .font(.caption)
+                        .padding(.bottom)
+                }
+            }
         }
         .navigationBarTitle(program.name)
     }
 }
+
 
 struct ProgramsView_Previews: PreviewProvider {
     static var previews: some View {
