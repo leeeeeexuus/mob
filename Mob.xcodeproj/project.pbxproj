@@ -36,7 +36,7 @@
 /* Begin PBXFileReference section */
 		FCB7B32A2B92A22200966339 /* Mob.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Mob.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FCB7B32D2B92A22200966339 /* MobApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobApp.swift; sourceTree = "<group>"; };
-		FCB7B32F2B92A22200966339 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		FCB7B32F2B92A22200966339 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; wrapsLines = 1; };
 		FCB7B3312B92A22300966339 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FCB7B3342B92A22300966339 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		FCB7B33A2B92A22300966339 /* MobTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MobTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
