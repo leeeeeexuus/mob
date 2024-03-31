@@ -377,29 +377,44 @@ struct ProgramDetailView: View {
     var program: Program
     
     var body: some View {
-        VStack {
-            Text(program.name)
-                .font(.title)
-                .fontWeight(.bold)
-                .padding()
-            
-            Text("Категория: \(program.category)")
-                .font(.headline)
-                .padding(.bottom)
-            
-            Text("Тренировочная программа:")
-                .font(.headline)
-                .padding(.bottom)
-            
-            ForEach(program.trainingProgram.exercises, id: \.self) { exercise in
-                VStack(alignment: .leading) {
-                    Text(exercise.name)
-                        .font(.subheadline)
-                    Text("Описание: \(exercise.description)")
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                Text(program.name)
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .padding(.horizontal)
+                
+                Text("Категория: \(program.category)")
+                    .font(.headline)
+                    .padding(.horizontal)
+                
+                Text("Тренировочная программа:")
+                    .font(.headline)
+                    .padding(.horizontal)
+                
+                ForEach(program.trainingProgram.exercises, id: \.self) { exercise in
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(exercise.name)
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .padding(.horizontal)
+                        
+                        Text("Описание: \(exercise.description)")
+                            .font(.body)
+                            .padding(.horizontal)
+                        
+                        HStack {
+                            Text("Подходы: \(exercise.sets)")
+                            Text("Повторения: \(exercise.reps)")
+                        }
                         .font(.caption)
-                    Text("Подходы: \(exercise.sets), Повторения: \(exercise.reps)")
-                        .font(.caption)
-                        .padding(.bottom)
+                        .foregroundColor(.gray)
+                        .padding(.horizontal)
+                    }
+                    .padding(.vertical)
+                    .background(Color.secondary.opacity(0.1))
+                    .cornerRadius(10)
+                    .padding(.horizontal)
                 }
             }
         }
