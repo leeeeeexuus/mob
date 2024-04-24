@@ -89,46 +89,55 @@ struct CircularCalorieTracker: View {
     
     var body: some View {
         // Реализация кругового трекера калорий
-        ZStack {
-            Circle()
-                .stroke(Color.gray, lineWidth: 10)
-                .frame(width: 200, height: 200)
-                .onTapGesture {
-                    withAnimation {
-                        isFoodListVisible.toggle() // Переключение видимости списка еды по касанию
+        VStack{
+            NavigationStack{
+                List{
+                    Text("Задача 1")
+                }
+                .navigationTitle("Задачи")
+                
+                ZStack {
+                    Circle()
+                        .stroke(Color.gray, lineWidth: 10)
+                        .frame(width: 200, height: 200)
+                        .onTapGesture {
+                            withAnimation {
+                                isFoodListVisible.toggle() // Переключение видимости списка еды по касанию
+                            }
+                        }
+                    
+                    Circle()
+                        .trim(from: 0.0, to: CGFloat(calorieIntake / 2500)) // ИЗМЕНИТЬ для пользователя
+                        .stroke(Color.blue, lineWidth: 10)
+                        .frame(width: 200, height: 200)
+                        .rotationEffect(Angle(degrees: -90))
+                        .onTapGesture {
+                            withAnimation {
+                                isFoodListVisible.toggle() // Переключение видимости списка еды по касанию
+                            }
+                        }
+                    
+                    Text("\(calorieIntake, specifier: "%.0f")/2500")
+                        .font(.title)
+                        .fontWeight(.bold)
+                    
+                    // Добавляем круг в качестве кнопки
+                    Button(action: {
+                        withAnimation {
+                            isFoodListVisible.toggle() // Переключение видимости списка еды
+                        }
+                    }) {
+                        Circle()
+                            .foregroundColor(.clear)
+                            .frame(width: 200, height: 200)
+                            .opacity(0.001) // Скрываем круг, чтобы он был невидимым, но активным для нажатия
                     }
                 }
-            
-            Circle()
-                .trim(from: 0.0, to: CGFloat(calorieIntake / 2500)) // ИЗМЕНИТЬ для пользователя
-                .stroke(Color.blue, lineWidth: 10)
-                .frame(width: 200, height: 200)
-                .rotationEffect(Angle(degrees: -90))
-                .onTapGesture {
-                    withAnimation {
-                        isFoodListVisible.toggle() // Переключение видимости списка еды по касанию
-                    }
+                .sheet(isPresented: $isFoodListVisible) {
+                    // Вид списка еды
+                    FoodListView(calorieIntake: $calorieIntake, isAddingFood: $isAddingFood, foodItems: $foodItems, isFoodListVisible: $isFoodListVisible)
                 }
-            
-            Text("\(calorieIntake, specifier: "%.0f")/2500")
-                .font(.title)
-                .fontWeight(.bold)
-            
-            // Добавляем круг в качестве кнопки
-            Button(action: {
-                withAnimation {
-                    isFoodListVisible.toggle() // Переключение видимости списка еды
-                }
-            }) {
-                Circle()
-                    .foregroundColor(.clear)
-                    .frame(width: 200, height: 200)
-                    .opacity(0.001) // Скрываем круг, чтобы он был невидимым, но активным для нажатия
             }
-        }
-        .sheet(isPresented: $isFoodListVisible) {
-            // Вид списка еды
-            FoodListView(calorieIntake: $calorieIntake, isAddingFood: $isAddingFood, foodItems: $foodItems, isFoodListVisible: $isFoodListVisible)
         }
     }
 }
@@ -281,147 +290,199 @@ struct MapView: View {
 }
 
 struct ProgramsView: View {
+    @State private var workouts: [Workout] = []
+
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    CategoryView(categoryName: "Спина", programs: [
-                        Program(name: "Программа для силового развития спины", image: "back_workout", category: "Спина", trainingProgram: TrainingProgram(daysPerWeek: 3, exercises: [Exercise(name: "Подтягивания", description: "Описание упражнения", sets: 3, reps: 10)])),
-                        Program(name: "Программа для гипертрофии спины", image: "back_hypertrophy", category: "Спина", trainingProgram: TrainingProgram(daysPerWeek: 5, exercises: [Exercise(name: "Подтягивания", description: "Описание упражнения", sets: 4, reps: 8)])),
-                        Program(name: "Программа для выносливости спины", image: "back_endurance", category: "Спина", trainingProgram: TrainingProgram(daysPerWeek: 3, exercises: [Exercise(name: "Бег", description: "Описание упражнения", sets: 1, reps: 30)]))
-                    ])
-                    
-                    CategoryView(categoryName: "Бицепс", programs: [
-                        Program(name: "Программа для силового развития бицепса", image: "biceps_workout", category: "Бицепс", trainingProgram: TrainingProgram(daysPerWeek: 4, exercises: [Exercise(name: "Подъемы штанги", description: "Описание упражнения", sets: 5, reps: 8)])),
-                        Program(name: "Программа для гипертрофии бицепса", image: "biceps_hypertrophy", category: "Бицепс", trainingProgram: TrainingProgram(daysPerWeek: 3, exercises: [Exercise(name: "Молотки", description: "Описание упражнения", sets: 4, reps: 10)])),
-                        Program(name: "Программа для выносливости бицепса", image: "biceps_endurance", category: "Бицепс", trainingProgram: TrainingProgram(daysPerWeek: 2, exercises: [Exercise(name: "Обратные подъемы", description: "Описание упражнения", sets: 3, reps: 15)]))
-                    ])
+                    ForEach(groupedWorkouts.keys.sorted(), id: \.self) { muscleGroup in
+                        Section(header: Text("\(muscleGroup)".uppercased()).font(.title).padding(.top)) {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 20) {
+                                    ForEach(groupedWorkouts[muscleGroup] ?? [], id: \.id) { workout in
+                                        NavigationLink(destination: WorkoutDetailView(workout: workout)) {
+                                            WorkoutCard(workout: workout)
+                                                .frame(width: 300) // Ширина карточки
+                                        }
+                                    }
+                                }
+                                .padding(.horizontal)
+                            }
+                        }
+                    }
                 }
                 .padding()
             }
             .navigationBarTitle("Программы")
+            .onAppear {
+                loadWorkoutsFromJSON()
+            }
         }
+    }
+
+    func loadWorkoutsFromJSON() {
+        if let url = Bundle.main.url(forResource: "workouts", withExtension: "json") {
+            do {
+                let data = try Data(contentsOf: url)
+                print("Данные успешно загружены из файла workouts.json")
+                let decoder = JSONDecoder()
+                workouts = try decoder.decode([Workout].self, from: data)
+            } catch {
+                print("Ошибка при загрузке данных из файла: \(error)")
+            }
+        } else {
+            print("Невозможно найти файл workouts.json")
+        }
+    }
+
+    var groupedWorkouts: [String: [Workout]] {
+        Dictionary(grouping: workouts, by: { $0.muscleGroup })
     }
 }
 
 
-struct CategoryView: View {
-    var categoryName: String
-    var programs: [Program]
+struct WorkoutCard: View {
+    let workout: Workout
     
     var body: some View {
-        VStack(alignment: .leading) {
-            Text(categoryName)
-                .font(.title)
-                .fontWeight(.bold)
-                .padding(.bottom, 10)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 20) {
-                    ForEach(programs) { program in
-                        NavigationLink(destination: ProgramDetailView(program: program)) {
-                            ProgramCard(program: program)
-                        }
-                    }
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text(workout.name)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                Spacer()
+                if workout.isFavorite {
+                    Image(systemName: "bookmark.fill")
+                        .foregroundColor(.blue)
+                        .font(.headline)
+                } else {
+                    Image(systemName: "bookmark")
+                        .foregroundColor(.gray)
+                        .font(.headline)
                 }
+            }
+            
+            // Место для изображения
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.gray.opacity(0.3))
+                .frame(height: 200) // Замените на подходящие значения для вашего дизайна
+                .padding(.vertical, 8) // Примерный отступ между текстом и изображением
+                
+            HStack {
+                difficultyIndicator(for: workout.difficulty)
+                Spacer()
+                Text("Время тренировки: \(workout.estimatedDuration) мин")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(10)
+        .shadow(radius: 5)
+        .padding()
+    }
+    
+    func difficultyIndicator(for difficulty: String) -> some View {
+        var filledLightningCount: Int
+        var emptyLightningCount: Int
+        switch difficulty {
+        case "Легко":
+            filledLightningCount = 1
+            emptyLightningCount = 2
+        case "Средне":
+            filledLightningCount = 2
+            emptyLightningCount = 1
+        case "Сложно":
+            filledLightningCount = 3
+            emptyLightningCount = 0
+        default:
+            filledLightningCount = 0
+            emptyLightningCount = 3
+        }
+        
+        return HStack(spacing: 2) {
+            ForEach(0..<filledLightningCount, id: \.self) { _ in
+                Image(systemName: "bolt.fill")
+                    .foregroundColor(.yellow) // Закрашенная молния желтая
+            }
+            ForEach(0..<emptyLightningCount, id: \.self) { _ in
+                Image(systemName: "bolt")
+                    .foregroundColor(.gray) // Пустая молния серая
             }
         }
     }
 }
 
-struct ProgramCard: View {
-    var program: Program
-    
-    var body: some View {
-        VStack(alignment: .leading) {
-            Image(program.image)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: 150, height: 150)
-                .clipped()
-                .cornerRadius(10)
-            
-            Text(program.name)
-                .font(.caption)
-                .foregroundColor(.primary)
-                .lineLimit(2)
-        }
-    }
-}
-
-struct Program: Identifiable { // Добавлено соответствие протоколу Identifiable
-    var id = UUID() // Создание уникального идентификатора
-    var name: String
-    var image: String
-    var category: String
-    var trainingProgram: TrainingProgram // Добавляем программу тренировок
-}
 
 
-struct TrainingProgram {
-    var daysPerWeek: Int
-    var exercises: [Exercise]
-}
-
-struct Exercise: Hashable {
-    var id = UUID() // Добавляем идентификатор для уникальности
-    
-    var name: String
-    var description: String
-    var sets: Int
-    var reps: Int
-}
 
 
-struct ProgramDetailView: View {
-    var program: Program
+struct WorkoutDetailView: View {
+    let workout: Workout
     
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Text(program.name)
+                Text(workout.name)
                     .font(.title)
-                    .fontWeight(.bold)
-                    .padding(.horizontal)
-                
-                Text("Категория: \(program.category)")
-                    .font(.headline)
-                    .padding(.horizontal)
-                
-                Text("Тренировочная программа:")
-                    .font(.headline)
-                    .padding(.horizontal)
-                
-                ForEach(program.trainingProgram.exercises, id: \.self) { exercise in
-                    VStack(alignment: .leading, spacing: 10) {
+                Text("Автор: \(workout.author)")
+                    .foregroundColor(.gray)
+                Text("Группа мышц: \(workout.muscleGroup)")
+                Text("Тренировок в неделю: \(workout.workoutsPerWeek)")
+                ForEach(workout.exercises, id: \.name) { exercise in
+                    VStack(alignment: .leading) {
                         Text(exercise.name)
                             .font(.headline)
-                            .fontWeight(.bold)
+                        Text("Повторов в подходе: \(exercise.repsPerSet)")
+                        Text("Подходов: \(exercise.sets)")
+                        Text("Время отдыха между подходами: \(exercise.restTimeBetweenSets) сек")
+                        Text("Техника выполнения:")
+                        Text(exercise.techniqueDescription)
                             .padding(.horizontal)
-                        
-                        Text("Описание: \(exercise.description)")
-                            .font(.body)
-                            .padding(.horizontal)
-                        
-                        HStack {
-                            Text("Подходы: \(exercise.sets)")
-                            Text("Повторения: \(exercise.reps)")
-                        }
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                        .padding(.horizontal)
+                        Image(exercise.techniqueImageName)
+                            .resizable()
+                            .scaledToFit()
                     }
-                    .padding(.vertical)
-                    .background(Color.secondary.opacity(0.1))
+                    .padding()
+                    .background(Color.white)
                     .cornerRadius(10)
-                    .padding(.horizontal)
+                    .shadow(radius: 5)
                 }
+                Text("Сложность: \(workout.difficulty)")
+                Text("Примерное время тренировки: \(workout.estimatedDuration) мин")
+                Text("Описание: \(workout.description)")
             }
+            .padding()
         }
-        .navigationBarTitle(program.name)
+        .navigationBarTitle(workout.name)
     }
 }
 
+
+struct Workout: Codable, Identifiable {
+    struct Exercise: Codable {
+        let name: String
+        let repsPerSet: Int
+        let sets: Int
+        let restTimeBetweenSets: Int
+        let techniqueDescription: String
+        let techniqueImageName: String
+    }
+    
+    let id: Int
+    let isFavorite: Bool
+    let name: String
+    let author: String
+    let muscleGroup: String
+    let mainImageName: String
+    let workoutsPerWeek: Int
+    let exercises: [Exercise]
+    let description: String
+    let difficulty: String
+    let estimatedDuration: Int
+}
 
 struct ProgramsView_Previews: PreviewProvider {
     static var previews: some View {

@@ -14,6 +14,7 @@
 		FCB7B33F2B92A22300966339 /* MobTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCB7B33E2B92A22300966339 /* MobTests.swift */; };
 		FCB7B3492B92A22300966339 /* MobUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCB7B3482B92A22300966339 /* MobUITests.swift */; };
 		FCB7B34B2B92A22300966339 /* MobUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCB7B34A2B92A22300966339 /* MobUITestsLaunchTests.swift */; };
+		FCE327A02BD956D700E72E31 /* workouts.json in Resources */ = {isa = PBXBuildFile; fileRef = FCE3279F2BD956D700E72E31 /* workouts.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -44,6 +45,7 @@
 		FCB7B3442B92A22300966339 /* MobUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MobUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FCB7B3482B92A22300966339 /* MobUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobUITests.swift; sourceTree = "<group>"; };
 		FCB7B34A2B92A22300966339 /* MobUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		FCE3279F2BD956D700E72E31 /* workouts.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; name = workouts.json; path = "../../../../Library/Mobile Documents/com~apple~TextEdit/Documents/workouts.json"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -94,6 +96,7 @@
 		FCB7B32C2B92A22200966339 /* Mob */ = {
 			isa = PBXGroup;
 			children = (
+				FCE3279F2BD956D700E72E31 /* workouts.json */,
 				FCB7B32D2B92A22200966339 /* MobApp.swift */,
 				FCB7B32F2B92A22200966339 /* ContentView.swift */,
 				FCB7B3312B92A22300966339 /* Assets.xcassets */,
@@ -231,6 +234,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FCE327A02BD956D700E72E31 /* workouts.json in Resources */,
 				FCB7B3352B92A22300966339 /* Preview Assets.xcassets in Resources */,
 				FCB7B3322B92A22300966339 /* Assets.xcassets in Resources */,
 			);
