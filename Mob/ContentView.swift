@@ -91,11 +91,6 @@ struct CircularCalorieTracker: View {
         // Реализация кругового трекера калорий
         VStack{
             NavigationStack{
-                List{
-                    Text("Задача 1")
-                }
-                .navigationTitle("Задачи")
-                
                 ZStack {
                     Circle()
                         .stroke(Color.gray, lineWidth: 10)
@@ -366,14 +361,14 @@ struct WorkoutCard: View {
             // Место для изображения
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color.gray.opacity(0.3))
-                .frame(height: 200) // Замените на подходящие значения для вашего дизайна
+                .frame(height: 200)
                 .padding(.vertical, 8) // Примерный отступ между текстом и изображением
                 
             HStack {
                 difficultyIndicator(for: workout.difficulty)
                 Spacer()
-                Text("Время тренировки: \(workout.estimatedDuration) мин")
-                    .font(.subheadline)
+                Text("Время: \(workout.estimatedDuration) мин")
+                    .font(.headline)
                     .foregroundColor(.secondary)
             }
         }
@@ -405,11 +400,13 @@ struct WorkoutCard: View {
         return HStack(spacing: 2) {
             ForEach(0..<filledLightningCount, id: \.self) { _ in
                 Image(systemName: "bolt.fill")
-                    .foregroundColor(.yellow) // Закрашенная молния желтая
+                    .foregroundColor(.red)
+                    .font(.title2)
             }
             ForEach(0..<emptyLightningCount, id: \.self) { _ in
                 Image(systemName: "bolt")
-                    .foregroundColor(.gray) // Пустая молния серая
+                    .foregroundColor(.gray)
+                    .font(.title2)
             }
         }
     }
@@ -418,19 +415,104 @@ struct WorkoutCard: View {
 
 
 
-
 struct WorkoutDetailView: View {
     let workout: Workout
+    @State private var isDescriptionExpanded = false
+    private let maxDescriptionLength = 80 // Максимальная длина предварительного просмотра
     
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 Text(workout.name)
                     .font(.title)
-                Text("Автор: \(workout.author)")
-                    .foregroundColor(.gray)
-                Text("Группа мышц: \(workout.muscleGroup)")
-                Text("Тренировок в неделю: \(workout.workoutsPerWeek)")
+                
+                HStack {
+                    Spacer()
+                    VStack {
+                        RoundedRectangle(cornerRadius: 5)
+                            .frame(width: 90, height: 45)
+                            .foregroundColor(Color.secondary.opacity(0.3))
+                            .overlay(
+                                Text("\(workout.estimatedDuration) мин")
+                                    .foregroundColor(.primary)
+                                    .bold()
+                                    .font(.title3)
+                            )
+                    }
+                    Spacer()
+                    VStack {
+                        RoundedRectangle(cornerRadius: 5)
+                            .frame(width: 80, height: 45)
+                            .foregroundColor(Color.secondary.opacity(0.3))
+                            .overlay(
+                                difficultyIndicator(for: workout.difficulty)
+                            )
+                    }
+                    Spacer()
+                    VStack {
+                        RoundedRectangle(cornerRadius: 5)
+                            .frame(width: 90, height: 45)
+                            .foregroundColor(Color.secondary.opacity(0.3))
+                            .overlay(
+                                Text("\(workout.workoutsPerWeek) \(pluralForm(for: workout.workoutsPerWeek))")
+                                    .foregroundColor(.primary)
+                                    .bold()
+                                    .font(.title3)
+                            )
+                    }
+                    Spacer()
+                }
+                
+                Text("Описание:")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(isDescriptionExpanded ? workout.description : getDescriptionPreview())
+                    
+                    if !isDescriptionExpanded && workout.description.count > maxDescriptionLength {
+                        Button("Подробнее") {
+                            isDescriptionExpanded.toggle()
+                        }
+                        .foregroundColor(.blue)
+                        .font(.callout)
+                    }
+                }
+                
+                Divider()
+                
+                HStack {
+                    Text("Автор:")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    Spacer()
+                }
+                Text(workout.author)
+                    .foregroundColor(.secondary)
+                
+                Divider()
+                
+                HStack {
+                    Text("Группа мышц:")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    Spacer()
+                }
+                Text(workout.muscleGroup)
+                    .foregroundColor(.secondary)
+                
+                Divider()
+                
+                HStack {
+                    Text("Тренировок в неделю:")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    Spacer()
+                }
+                Text("\(workout.workoutsPerWeek)")
+                    .foregroundColor(.secondary)
+                
+                Divider()
+                
                 ForEach(workout.exercises, id: \.name) { exercise in
                     VStack(alignment: .leading) {
                         Text(exercise.name)
@@ -449,14 +531,69 @@ struct WorkoutDetailView: View {
                     .background(Color.white)
                     .cornerRadius(10)
                     .shadow(radius: 5)
+                    
+                    Divider()
                 }
-                Text("Сложность: \(workout.difficulty)")
-                Text("Примерное время тренировки: \(workout.estimatedDuration) мин")
-                Text("Описание: \(workout.description)")
             }
             .padding()
         }
         .navigationBarTitle(workout.name)
+    }
+    
+    func difficultyIndicator(for difficulty: String) -> some View {
+        var filledLightningCount: Int
+        var emptyLightningCount: Int
+        switch difficulty {
+        case "Легко":
+            filledLightningCount = 1
+            emptyLightningCount = 2
+        case "Средне":
+            filledLightningCount = 2
+            emptyLightningCount = 1
+        case "Сложно":
+            filledLightningCount = 3
+            emptyLightningCount = 0
+        default:
+            filledLightningCount = 0
+            emptyLightningCount = 3
+        }
+        
+        return HStack(spacing: 2) {
+            ForEach(0..<filledLightningCount, id: \.self) { _ in
+                Image(systemName: "bolt.fill")
+                    .foregroundColor(Color.red)
+                    .font(.title3)
+            }
+            ForEach(0..<emptyLightningCount, id: \.self) { _ in
+                Image(systemName: "bolt")
+                    .foregroundColor(Color.gray)
+                    .font(.title3)
+            }
+        }
+    }
+    
+    func getDescriptionPreview() -> String {
+        if workout.description.count <= maxDescriptionLength {
+            return workout.description
+        } else {
+            let substring = workout.description.prefix(maxDescriptionLength)
+            if let lastSpace = substring.lastIndex(of: " ") {
+                let lastIndex = workout.description.index(lastSpace, offsetBy: 1)
+                return String(workout.description[..<lastIndex])
+            } else {
+                return String(substring)
+            }
+        }
+    }
+    
+    func pluralForm(for number: Int) -> String {
+        if number % 10 == 1 && number != 11 {
+            return "раз"
+        } else if number % 10 >= 2 && number % 10 <= 4 && (number < 12 || number > 14) {
+            return "раза"
+        } else {
+            return "раз"
+        }
     }
 }
 
