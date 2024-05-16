@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		FCA2CC322BF6ACBD000A0B27 /* sports_places_moscow.json in Resources */ = {isa = PBXBuildFile; fileRef = FCA2CC312BF6ACBD000A0B27 /* sports_places_moscow.json */; };
 		FCB7B32E2B92A22200966339 /* MobApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCB7B32D2B92A22200966339 /* MobApp.swift */; };
 		FCB7B3302B92A22200966339 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCB7B32F2B92A22200966339 /* ContentView.swift */; };
 		FCB7B3322B92A22300966339 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FCB7B3312B92A22300966339 /* Assets.xcassets */; };
@@ -35,6 +36,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		FCA2CC312BF6ACBD000A0B27 /* sports_places_moscow.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; name = sports_places_moscow.json; path = ../../../../PycharmProjects/maps/sports_places_moscow.json; sourceTree = "<group>"; };
 		FCB7B32A2B92A22200966339 /* Mob.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Mob.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FCB7B32D2B92A22200966339 /* MobApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobApp.swift; sourceTree = "<group>"; };
 		FCB7B32F2B92A22200966339 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; wrapsLines = 1; };
@@ -99,6 +101,7 @@
 				FCE3279F2BD956D700E72E31 /* workouts.json */,
 				FCB7B32D2B92A22200966339 /* MobApp.swift */,
 				FCB7B32F2B92A22200966339 /* ContentView.swift */,
+				FCA2CC312BF6ACBD000A0B27 /* sports_places_moscow.json */,
 				FCB7B3312B92A22300966339 /* Assets.xcassets */,
 				FCB7B3332B92A22300966339 /* Preview Content */,
 			);
@@ -236,6 +239,7 @@
 			files = (
 				FCE327A02BD956D700E72E31 /* workouts.json in Resources */,
 				FCB7B3352B92A22300966339 /* Preview Assets.xcassets in Resources */,
+				FCA2CC322BF6ACBD000A0B27 /* sports_places_moscow.json in Resources */,
 				FCB7B3322B92A22300966339 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

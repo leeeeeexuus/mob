@@ -1,11 +1,6 @@
-//
-//  ContentView.swift
-//  Mob
-//
-//  Created by Aleksey Nizikov on 02.03.2024.
-//
-
 import SwiftUI
+import MapKit
+import CoreLocation
 
 struct ContentView: View {
     @State private var selectedTab = 2 // Главное окно (с трекером)
@@ -32,7 +27,7 @@ struct ContentView: View {
             // Вкладка карты
             NavigationView {
                 MapView()
-                    .navigationBarTitle("Карта")
+                    .navigationBarTitle("Карта", displayMode: .large)
             }
             .tabItem {
                 VStack {
@@ -47,7 +42,7 @@ struct ContentView: View {
                 .tabItem {
                     VStack {
                         Image(systemName: "chart.pie.fill")
-                        Text("Трекер")
+                        Text("Прогресс")
                     }
                 }
                 .tag(2)
@@ -55,7 +50,7 @@ struct ContentView: View {
             // Вкладка программ
             NavigationView {
                 ProgramsView()
-                    .navigationBarTitle("Раздел программ")
+                    .navigationBarTitle("ПРОГРАММЫ", displayMode: .large)
             }
             .tabItem {
                 VStack {
@@ -78,6 +73,7 @@ struct ContentView: View {
             }
             .tag(4)
         }
+        .accentColor(.blue) // Цвет выделенной вкладки
     }
 }
 
@@ -88,49 +84,134 @@ struct CircularCalorieTracker: View {
     @Binding var foodItems: [FoodItem] // Список продуктов питания
     
     var body: some View {
-        // Реализация кругового трекера калорий
-        VStack{
-            NavigationStack{
-                ZStack {
-                    Circle()
-                        .stroke(Color.gray, lineWidth: 10)
-                        .frame(width: 200, height: 200)
-                        .onTapGesture {
-                            withAnimation {
-                                isFoodListVisible.toggle() // Переключение видимости списка еды по касанию
+        ScrollView {
+            VStack {
+                // Верхняя часть с приветствием и иконкой уведомлений
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text("Добро пожаловать, Алексей!")
+                            .font(.title2)
+                            .foregroundColor(.primary)
+                    }
+                    Spacer()
+                    Image(systemName: "bell.fill")
+                        .foregroundColor(.gray)
+                }
+                .padding()
+                
+                // Квадраты с завершенными упражнениями и трекер калорий
+                HStack(spacing: 20) {
+                    // Завершенные упражнения
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Color.green.opacity(0.9))
+                        .frame(width: 160, height: 160)
+                        .overlay(
+                            VStack {
+                                Text("Сделано упражнений")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                Text("2/4")
+                                    .font(.title)
+                                    .foregroundColor(.white)
+                            }
+                        )
+                    
+                    // Круговой трекер калорий
+                    VStack {
+                        ZStack {
+                            Circle()
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 10)
+                                .frame(width: 160, height: 160)
+                            
+                            Circle()
+                                .trim(from: 0.0, to: CGFloat(calorieIntake / 2500))
+                                .stroke(Color.blue, lineWidth: 10)
+                                .frame(width: 160, height: 160)
+                                .rotationEffect(Angle(degrees: -90))
+                            
+                            Text("\(Int(calorieIntake))/2500")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                            
+                            Button(action: {
+                                withAnimation {
+                                    isFoodListVisible.toggle()
+                                }
+                            }) {
+                                Circle()
+                                    .foregroundColor(.clear)
+                                    .frame(width: 160, height: 160)
+                                    .opacity(0.001)
                             }
                         }
-                    
-                    Circle()
-                        .trim(from: 0.0, to: CGFloat(calorieIntake / 2500)) // ИЗМЕНИТЬ для пользователя
-                        .stroke(Color.blue, lineWidth: 10)
-                        .frame(width: 200, height: 200)
-                        .rotationEffect(Angle(degrees: -90))
-                        .onTapGesture {
-                            withAnimation {
-                                isFoodListVisible.toggle() // Переключение видимости списка еды по касанию
-                            }
+                        .sheet(isPresented: $isFoodListVisible) {
+                            // Вид списка еды
+                            FoodListView(calorieIntake: $calorieIntake, isAddingFood: $isAddingFood, foodItems: $foodItems, isFoodListVisible: $isFoodListVisible)
                         }
-                    
-                    Text("\(calorieIntake, specifier: "%.0f")/2500")
-                        .font(.title)
-                        .fontWeight(.bold)
-                    
-                    // Добавляем круг в качестве кнопки
-                    Button(action: {
-                        withAnimation {
-                            isFoodListVisible.toggle() // Переключение видимости списка еды
-                        }
-                    }) {
-                        Circle()
-                            .foregroundColor(.clear)
-                            .frame(width: 200, height: 200)
-                            .opacity(0.001) // Скрываем круг, чтобы он был невидимым, но активным для нажатия
                     }
                 }
-                .sheet(isPresented: $isFoodListVisible) {
-                    // Вид списка еды
-                    FoodListView(calorieIntake: $calorieIntake, isAddingFood: $isAddingFood, foodItems: $foodItems, isFoodListVisible: $isFoodListVisible)
+                .padding(.vertical)
+                
+                // Количество шагов
+                HStack {
+                    Text("7 765 шагов")
+                        .font(.title)
+                        .fontWeight(.bold)
+                    Spacer()
+                    Image(systemName: "figure.walk")
+                        .foregroundColor(.gray)
+                }
+                .padding()
+                .background(Color.black.opacity(0.05))
+                .cornerRadius(10)
+                .padding(.horizontal)
+                
+                // Секция "Сегодняшняя активность"
+                VStack(alignment: .leading) {
+                    Text("Сегодняшняя активность")
+                        .font(.headline)
+                        .padding(.horizontal)
+                    
+                    HStack(spacing: 20) {
+                        // Пример тренировки
+                        VStack(alignment: .leading) {
+                            Image("full_body_workout")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 150, height: 150)
+                                .clipShape(RoundedRectangle(cornerRadius: 15))
+                            
+                            Text("Комплексная тренировка")
+                                .font(.headline)
+                            
+                            HStack {
+                                Text("346 ккал")
+                                Text("20 мин")
+                            }
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                        }
+                        
+                        // Другой пример тренировки
+                        VStack(alignment: .leading) {
+                            Image("abs_legs_workout")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 150, height: 150)
+                                .clipShape(RoundedRectangle(cornerRadius: 15))
+                            
+                            Text("Пресс и ноги")
+                                .font(.headline)
+                            
+                            HStack {
+                                Text("248 ккал")
+                                Text("15 минут")
+                            }
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                        }
+                    }
+                    .padding(.horizontal)
                 }
             }
         }
@@ -278,11 +359,147 @@ struct UserView: View {
     }
 }
 
-struct MapView: View {
-    var body: some View {
-        Text("Карта")
+
+import SwiftUI
+import MapKit
+
+class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+    private let manager = CLLocationManager()
+    
+    @Published var location: CLLocation?
+    
+    override init() {
+        super.init()
+        self.manager.delegate = self
+        self.manager.desiredAccuracy = kCLLocationAccuracyBest
+        self.manager.requestWhenInUseAuthorization()
+        self.manager.startUpdatingLocation()
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        self.location = locations.first
     }
 }
+
+struct MapView: View {
+    @State private var region = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 55.7558, longitude: 37.6176), // Координаты Москвы
+        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+    )
+    
+    @State private var places: [Place] = []
+
+    var body: some View {
+        VStack {
+            Map(coordinateRegion: $region, annotationItems: places) { place in
+                MapAnnotation(coordinate: place.coordinate) {
+                    VStack {
+                        Image(systemName: "mappin.circle.fill")
+                            .resizable()
+                            .frame(width: 30, height: 30)
+                            .foregroundColor(.red)
+                        Text(place.name)
+                            .font(.caption)
+                            .padding(5)
+                            .background(Color.white.opacity(0.7))
+                            .cornerRadius(10)
+                    }
+                }
+            }
+            .edgesIgnoringSafeArea(.all)
+            .onAppear {
+                loadPlaces()
+            }
+            
+            VStack(alignment: .leading) {
+                Text("Спортивные места")
+                    .font(.headline)
+                    .padding(.horizontal)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack {
+                        ForEach(places) { place in
+                            VStack(alignment: .leading) {
+                                Text(place.name)
+                                    .font(.headline)
+                                Text(place.category ?? "Неизвестно")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                            .padding()
+                            .background(Color.white)
+                            .cornerRadius(10)
+                            .shadow(radius: 5)
+                        }
+                    }
+                    .padding()
+                }
+            }
+            .background(Color.white)
+            .cornerRadius(10)
+            .shadow(radius: 5)
+            .padding()
+        }
+        .navigationBarTitle("Карта", displayMode: .large)
+    }
+    
+    func loadPlaces() {
+        guard let url = Bundle.main.url(forResource: "sports_places_moscow", withExtension: "json") else {
+            print("Failed to locate JSON file.")
+            return
+        }
+        
+        do {
+            let data = try Data(contentsOf: url)
+            let decoder = JSONDecoder()
+            let loadedData = try decoder.decode([String: [Place]].self, from: data)
+            self.places = loadedData.flatMap { (key, places) in
+                places.map { place in
+                    Place(name: place.name, coordinate: place.coordinate, category: key)
+                }
+            }
+        } catch {
+            print("Failed to load JSON file: \(error)")
+        }
+    }
+}
+
+struct Place: Identifiable, Decodable {
+    let id = UUID()
+    let name: String
+    let coordinate: CLLocationCoordinate2D
+    let category: String?
+    
+    private enum CodingKeys: String, CodingKey {
+        case name
+        case coordinates
+        case category
+    }
+    
+    init(name: String, coordinate: CLLocationCoordinate2D, category: String?) {
+        self.name = name
+        self.coordinate = coordinate
+        self.category = category
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.category = try container.decodeIfPresent(String.self, forKey: .category)
+        let coordinatesArray = try container.decode([[Double]].self, forKey: .coordinates)
+        let coordinate = CLLocationCoordinate2D(latitude: coordinatesArray[0][0], longitude: coordinatesArray[0][1])
+        self.coordinate = coordinate
+    }
+}
+
+extension CLLocationCoordinate2D: Decodable {
+    public init(from decoder: Decoder) throws {
+        var container = try decoder.unkeyedContainer()
+        let latitude = try container.decode(CLLocationDegrees.self)
+        let longitude = try container.decode(CLLocationDegrees.self)
+        self.init(latitude: latitude, longitude: longitude)
+    }
+}
+
 
 struct ProgramsView: View {
     @State private var workouts: [Workout] = []
@@ -296,7 +513,8 @@ struct ProgramsView: View {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 20) {
                                     ForEach(groupedWorkouts[muscleGroup] ?? [], id: \.id) { workout in
-                                        NavigationLink(destination: WorkoutDetailView(workout: workout)) {
+                                        NavigationLink(destination: WorkoutDetailView(workout: workout)
+                                            .navigationBarTitle(workout.name, displayMode: .inline)) { // Просмотреть другой способ!!!
                                             WorkoutCard(workout: workout)
                                                 .frame(width: 300) // Ширина карточки
                                         }
@@ -309,10 +527,11 @@ struct ProgramsView: View {
                 }
                 .padding()
             }
-            .navigationBarTitle("Программы")
+            
             .onAppear {
                 loadWorkoutsFromJSON()
             }
+            
         }
     }
 
@@ -413,8 +632,6 @@ struct WorkoutCard: View {
 }
 
 
-
-
 struct WorkoutDetailView: View {
     let workout: Workout
     @State private var isDescriptionExpanded = false
@@ -424,7 +641,7 @@ struct WorkoutDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 Text(workout.name)
-                    .font(.title)
+                    .font(.largeTitle)
                 
                 HStack {
                     Spacer()
@@ -478,40 +695,18 @@ struct WorkoutDetailView: View {
                     }
                 }
                 
-                Divider()
-                
-                HStack {
-                    Text("Автор:")
-                        .font(.headline)
+                if workout.author != "" {
+                    Text("Автор: \(workout.author)")
+                        .font(.subheadline)
                         .foregroundColor(.primary)
-                    Spacer()
                 }
-                Text(workout.author)
-                    .foregroundColor(.secondary)
                 
-                Divider()
-                
-                HStack {
-                    Text("Группа мышц:")
-                        .font(.headline)
+                if workout.muscleGroup != "" {
+                    Text("Группа мышц: \(workout.muscleGroup)")
+                        .font(.subheadline)
                         .foregroundColor(.primary)
-                    Spacer()
                 }
-                Text(workout.muscleGroup)
-                    .foregroundColor(.secondary)
                 
-                Divider()
-                
-                HStack {
-                    Text("Тренировок в неделю:")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    Spacer()
-                }
-                Text("\(workout.workoutsPerWeek)")
-                    .foregroundColor(.secondary)
-                
-                Divider()
                 
                 ForEach(workout.exercises, id: \.name) { exercise in
                     VStack(alignment: .leading) {
@@ -532,7 +727,6 @@ struct WorkoutDetailView: View {
                     .cornerRadius(10)
                     .shadow(radius: 5)
                     
-                    Divider()
                 }
             }
             .padding()
@@ -597,7 +791,6 @@ struct WorkoutDetailView: View {
     }
 }
 
-
 struct Workout: Codable, Identifiable {
     struct Exercise: Codable {
         let name: String
@@ -620,6 +813,8 @@ struct Workout: Codable, Identifiable {
     let difficulty: String
     let estimatedDuration: Int
 }
+
+
 
 struct ProgramsView_Previews: PreviewProvider {
     static var previews: some View {
