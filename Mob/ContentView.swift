@@ -1,6 +1,9 @@
 import SwiftUI
 import MapKit
 import CoreLocation
+import CoreMotion
+import UIKit
+
 
 struct ContentView: View {
     @State private var selectedTab = 2 // Главное окно (с трекером)
@@ -8,6 +11,7 @@ struct ContentView: View {
     @State private var foodItems: [FoodItem] = [] // Список продуктов питания
     @State private var isAddingFood = false // Состояние для управления добавлением пищи
     @State private var isFoodListVisible = false // Состояние для управления видимостью списка еды
+    @StateObject private var pedometerManager = PedometerManager() // Педометр менеджер
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -38,7 +42,7 @@ struct ContentView: View {
             .tag(1)
             
             // Вкладка кругового трекера калорий
-            CircularCalorieTracker(calorieIntake: $calorieIntake, isAddingFood: $isAddingFood, isFoodListVisible: $isFoodListVisible, foodItems: $foodItems)
+            CircularCalorieTracker(calorieIntake: $calorieIntake, isAddingFood: $isAddingFood, isFoodListVisible: $isFoodListVisible, foodItems: $foodItems, pedometerManager: pedometerManager)
                 .tabItem {
                     VStack {
                         Image(systemName: "chart.pie.fill")
@@ -77,11 +81,37 @@ struct ContentView: View {
     }
 }
 
+class PedometerManager: NSObject, ObservableObject {
+    private let pedometer = CMPedometer()
+    @Published var stepCount: Int?
+    
+    func startTracking() {
+        guard CMPedometer.isStepCountingAvailable() else {
+            print("Подсчет шагов недоступен")
+            return
+        }
+        
+        pedometer.startUpdates(from: Date()) { [weak self] data, error in
+            if let error = error {
+                print("Ошибка при запуске обновлений шагомера: \(error)")
+            }
+            
+            guard let self = self, let data = data else { return }
+            DispatchQueue.main.async {
+                self.stepCount = data.numberOfSteps.intValue
+            }
+        }
+    }
+}
+
 struct CircularCalorieTracker: View {
     @Binding var calorieIntake: Double
     @Binding var isAddingFood: Bool // Состояние для управления добавлением пищи
     @Binding var isFoodListVisible: Bool // Состояние для управления видимостью списка еды
     @Binding var foodItems: [FoodItem] // Список продуктов питания
+    @ObservedObject var pedometerManager: PedometerManager // Педометр менеджер
+    
+    @State private var isTrackingSteps = false
     
     var body: some View {
         ScrollView {
@@ -152,11 +182,22 @@ struct CircularCalorieTracker: View {
                 }
                 .padding(.vertical)
                 
-                // Количество шагов
+                // Количество шагов или кнопка для отслеживания
                 HStack {
-                    Text("7 765 шагов")
-                        .font(.title)
-                        .fontWeight(.bold)
+                    if let stepCount = pedometerManager.stepCount {
+                        Text("\(stepCount) шагов")
+                            .font(.title)
+                            .fontWeight(.bold)
+                    } else {
+                        Button(action: {
+                            requestStepTrackingPermission()
+                        }) {
+                            Text("Следить за шагами")
+                                .font(.title)
+                                .fontWeight(.bold)
+                                .foregroundColor(.blue)
+                        }
+                    }
                     Spacer()
                     Image(systemName: "figure.walk")
                         .foregroundColor(.gray)
@@ -216,6 +257,28 @@ struct CircularCalorieTracker: View {
             }
         }
     }
+    
+    func requestStepTrackingPermission() {
+        let status = CMPedometer.authorizationStatus()
+        if status == .notDetermined {
+            pedometerManager.startTracking()
+            print("Запрашиваем разрешение и начинаем отслеживание")
+        } else if status == .authorized {
+            pedometerManager.startTracking()
+            print("Уже авторизовано, начинаем отслеживание")
+        } else {
+            print("Разрешение на использование шагомера отклонено или ограничено")
+            // Открываем настройки устройства
+            if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
+                if UIApplication.shared.canOpenURL(settingsUrl) {
+                    UIApplication.shared.open(settingsUrl, completionHandler: { (success) in
+                        print("Настройки открыты: \(success)") // Для отладки
+                    })
+                }
+            }
+        }
+    }
+
 }
 
 struct FoodItem: Codable, Identifiable {
@@ -326,29 +389,56 @@ struct AddFoodView: View {
     @Binding var foodItems: [FoodItem] // Список продуктов питания
     @State private var foodName = ""
     @State private var calories = ""
+    @State private var showAlert = false
+    @State private var alertMessage = ""
     
     var body: some View {
         NavigationView {
             Form {
                 Section(header: Text("Добавить продукт")) {
                     TextField("Наименование продукта", text: $foodName)
+                        .autocapitalization(.words) // Автоматическое написание с заглавной буквы
                     TextField("Калории", text: $calories)
-                        .keyboardType(.numberPad)
+                        .keyboardType(.numberPad) // Установка циферной клавиатуры для ввода калорий
                 }
                 
                 Button("Добавить продукт") {
-                    guard let calories = Double(calories) else { return }
-                    let newFoodItem = FoodItem(name: foodName, calories: calories)
-                    calorieIntake += calories // Обновить прием калорий
-                    foodItems.append(newFoodItem) // Добавляем новый продукт питания в список
-                    FoodManager.shared.saveFoodItems(forDate: Date(), foodItems: foodItems) // Сохраняем продукты питания
-                    isAddingFood = false
+                    if validateInputs() {
+                        guard let calories = Double(calories) else { return }
+                        let newFoodItem = FoodItem(name: foodName, calories: calories)
+                        calorieIntake += calories // Обновить прием калорий
+                        foodItems.append(newFoodItem) // Добавляем новый продукт питания в список
+                        FoodManager.shared.saveFoodItems(forDate: Date(), foodItems: foodItems) // Сохраняем продукты питания
+                        isAddingFood = false
+                    }
+                }
+                .alert(isPresented: $showAlert) {
+                    Alert(title: Text("Ошибка ввода"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
                 }
             }
             .navigationTitle("Добавить продукт")
             .navigationBarItems(trailing: Button("Отмена") {
                 isAddingFood = false
             })
+        }
+    }
+    
+    // Функция для проверки ввода
+    func validateInputs() -> Bool {
+        // Проверяем, что название продукта не пустое
+        if foodName.trimmingCharacters(in: .whitespaces).isEmpty {
+            alertMessage = "Пожалуйста, введите название продукта."
+            showAlert = true
+            return false
+        }
+        
+        // Проверяем, что калории можно преобразовать в Double и они больше нуля
+        if let caloriesValue = Double(calories), caloriesValue > 0 {
+            return true
+        } else {
+            alertMessage = "Пожалуйста, введите допустимое количество калорий."
+            showAlert = true
+            return false
         }
     }
 }
@@ -815,12 +905,6 @@ struct Workout: Codable, Identifiable {
 }
 
 
-
-struct ProgramsView_Previews: PreviewProvider {
-    static var previews: some View {
-        ProgramsView()
-    }
-}
 
 
 struct TrainingView: View {
