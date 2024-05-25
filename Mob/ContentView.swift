@@ -474,9 +474,91 @@ struct TrackerProgramsView: View {
 
 struct UserView: View {
     var body: some View {
-        Text("Профиль пользователя")
+        NavigationView {
+            List {
+                Section(header: Text("Личная информация")) {
+                    NavigationLink(destination: PersonalInfoView()) {
+                        HStack {
+                            Image(systemName: "person.crop.circle")
+                            Text("Личная информация")
+                        }
+                    }
+                }
+                
+                Section(header: Text("Тренировки")) {
+                    NavigationLink(destination: SavedWorkoutsView()) {
+                        HStack {
+                            Image(systemName: "bookmark.circle")
+                            Text("Сохраненные тренировки")
+                        }
+                    }
+                    
+                    NavigationLink(destination: WorkoutsHistoryView()) {
+                        HStack {
+                            Image(systemName: "clock")
+                            Text("История тренировок")
+                        }
+                    }
+                }
+                
+                Section(header: Text("Уведомления")) {
+                    NavigationLink(destination: NotificationsView()) {
+                        HStack {
+                            Image(systemName: "bell")
+                            Text("Уведомления")
+                        }
+                    }
+                }
+                
+                Section(header: Text("Настройки")) {
+                    NavigationLink(destination: SettingsView()) {
+                        HStack {
+                            Image(systemName: "gearshape")
+                            Text("Настройки")
+                        }
+                    }
+                }
+            }
+            .navigationBarTitle("Профиль пользователя")
+        }
     }
 }
+
+struct PersonalInfoView: View {
+    var body: some View {
+        Text("Личная информация")
+            .navigationBarTitle("Личная информация", displayMode: .inline)
+    }
+}
+
+struct SavedWorkoutsView: View {
+    var body: some View {
+        Text("Сохраненные тренировки")
+            .navigationBarTitle("Сохраненные тренировки", displayMode: .inline)
+    }
+}
+
+struct WorkoutsHistoryView: View {
+    var body: some View {
+        Text("История тренировок")
+            .navigationBarTitle("История тренировок", displayMode: .inline)
+    }
+}
+
+struct NotificationsView: View {
+    var body: some View {
+        Text("Уведомления")
+            .navigationBarTitle("Уведомления", displayMode: .inline)
+    }
+}
+
+struct SettingsView: View {
+    var body: some View {
+        Text("Настройки")
+            .navigationBarTitle("Настройки", displayMode: .inline)
+    }
+}
+
 
 
 
@@ -561,7 +643,7 @@ struct MapView: View {
     
     func loadPlaces() {
         guard let url = Bundle.main.url(forResource: "sports_places_moscow", withExtension: "json") else {
-            print("Failed to locate JSON file.")
+            print("Не удалось найти JSON файл.")
             return
         }
         
@@ -575,7 +657,7 @@ struct MapView: View {
                 }
             }
         } catch {
-            print("Failed to load JSON file: \(error)")
+            print("Не удалось загрузить JSON файл: \(error)")
         }
     }
 }
