@@ -112,6 +112,7 @@ struct CircularCalorieTracker: View {
     @ObservedObject var pedometerManager: PedometerManager // Педометр менеджер
     
     @State private var isTrackingSteps = false
+    @State private var randomWorkouts: [Workout] = []
     
     var body: some View {
         ScrollView {
@@ -133,16 +134,18 @@ struct CircularCalorieTracker: View {
                 HStack(spacing: 20) {
                     // Завершенные упражнения
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.green.opacity(0.9))
-                        .frame(width: 160, height: 160)
+                        .fill(Color.blue.opacity(1))
+                        .frame(width: 160, height: 130)
                         .overlay(
                             VStack {
                                 Text("Сделано упражнений")
-                                    .font(.headline)
+                                    .font(.title2)
                                     .foregroundColor(.white)
+                                    
                                 Text("2/4")
                                     .font(.title)
                                     .foregroundColor(.white)
+                                    .bold()
                             }
                         )
                     
@@ -151,16 +154,16 @@ struct CircularCalorieTracker: View {
                         ZStack {
                             Circle()
                                 .stroke(Color.gray.opacity(0.3), lineWidth: 10)
-                                .frame(width: 160, height: 160)
+                                .frame(width: 130, height: 130)
                             
                             Circle()
                                 .trim(from: 0.0, to: CGFloat(calorieIntake / 2500))
                                 .stroke(Color.blue, lineWidth: 10)
-                                .frame(width: 160, height: 160)
+                                .frame(width: 130, height: 130)
                                 .rotationEffect(Angle(degrees: -90))
                             
                             Text("\(Int(calorieIntake))/2500")
-                                .font(.title2)
+                                .font(.title3)
                                 .fontWeight(.bold)
                             
                             Button(action: {
@@ -170,7 +173,7 @@ struct CircularCalorieTracker: View {
                             }) {
                                 Circle()
                                     .foregroundColor(.clear)
-                                    .frame(width: 160, height: 160)
+                                    .frame(width: 130, height: 130)
                                     .opacity(0.001)
                             }
                         }
@@ -207,53 +210,26 @@ struct CircularCalorieTracker: View {
                 .cornerRadius(10)
                 .padding(.horizontal)
                 
-                // Секция "Сегодняшняя активность"
+                // Секция с рандомными тренировками
                 VStack(alignment: .leading) {
-                    Text("Сегодняшняя активность")
+                    Text("Рекомендуемые тренировки")
                         .font(.headline)
                         .padding(.horizontal)
                     
-                    HStack(spacing: 20) {
-                        // Пример тренировки
-                        VStack(alignment: .leading) {
-                            Image("full_body_workout")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 150, height: 150)
-                                .clipShape(RoundedRectangle(cornerRadius: 15))
-                            
-                            Text("Комплексная тренировка")
-                                .font(.headline)
-                            
-                            HStack {
-                                Text("346 ккал")
-                                Text("20 мин")
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 20) {
+                            ForEach(randomWorkouts, id: \.id) { workout in
+                                WorkoutCard(workout: workout)
+                                    .frame(width: 300)
                             }
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
                         }
-                        
-                        // Другой пример тренировки
-                        VStack(alignment: .leading) {
-                            Image("abs_legs_workout")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 150, height: 150)
-                                .clipShape(RoundedRectangle(cornerRadius: 15))
-                            
-                            Text("Пресс и ноги")
-                                .font(.headline)
-                            
-                            HStack {
-                                Text("248 ккал")
-                                Text("15 минут")
-                            }
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                        }
+                        .padding(.horizontal)
                     }
-                    .padding(.horizontal)
                 }
+                .padding(.top)
+            }
+            .onAppear {
+                loadRandomWorkouts()
             }
         }
     }
@@ -278,7 +254,21 @@ struct CircularCalorieTracker: View {
             }
         }
     }
-
+    
+    func loadRandomWorkouts() {
+        if let url = Bundle.main.url(forResource: "workouts", withExtension: "json") {
+            do {
+                let data = try Data(contentsOf: url)
+                let decoder = JSONDecoder()
+                let workouts = try decoder.decode([Workout].self, from: data)
+                self.randomWorkouts = Array(workouts.shuffled().prefix(3)) // Рандомные 3 тренировки
+            } catch {
+                print("Ошибка при загрузке данных из файла: \(error)")
+            }
+        } else {
+            print("Невозможно найти файл workouts.json")
+        }
+    }
 }
 
 struct FoodItem: Codable, Identifiable {
@@ -443,6 +433,45 @@ struct AddFoodView: View {
     }
 }
 
+struct TrackerProgramsView: View {
+    @State private var workouts: [Workout] = []
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Программы тренировок")
+                .font(.headline)
+                .padding(.horizontal)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 20) {
+                    ForEach(workouts, id: \.id) { workout in
+                        WorkoutCard(workout: workout)
+                            .frame(width: 300)
+                    }
+                }
+                .padding(.horizontal)
+            }
+        }
+        .onAppear {
+            loadWorkoutsFromJSON()
+        }
+    }
+
+    func loadWorkoutsFromJSON() {
+        if let url = Bundle.main.url(forResource: "workouts", withExtension: "json") {
+            do {
+                let data = try Data(contentsOf: url)
+                let decoder = JSONDecoder()
+                workouts = try decoder.decode([Workout].self, from: data)
+            } catch {
+                print("Ошибка при загрузке данных из файла: \(error)")
+            }
+        } else {
+            print("Невозможно найти файл workouts.json")
+        }
+    }
+}
+
 struct UserView: View {
     var body: some View {
         Text("Профиль пользователя")
@@ -450,8 +479,6 @@ struct UserView: View {
 }
 
 
-import SwiftUI
-import MapKit
 
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
@@ -670,15 +697,18 @@ struct WorkoutCard: View {
             // Место для изображения
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color.gray.opacity(0.3))
-                .frame(height: 200)
+                .frame(height: 150)
                 .padding(.vertical, 8) // Примерный отступ между текстом и изображением
                 
             HStack {
                 difficultyIndicator(for: workout.difficulty)
                 Spacer()
-                Text("Время: \(workout.estimatedDuration) мин")
+                Text("\(workout.estimatedDuration) мин")
                     .font(.headline)
                     .foregroundColor(.secondary)
+                Text("\(workout.estimatedCaloriesBurned) ккал") // Новое поле калорий
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
             }
         }
         .padding()
@@ -733,41 +763,50 @@ struct WorkoutDetailView: View {
                 Text(workout.name)
                     .font(.largeTitle)
                 
-                HStack {
-                    Spacer()
-                    VStack {
-                        RoundedRectangle(cornerRadius: 5)
-                            .frame(width: 90, height: 45)
-                            .foregroundColor(Color.secondary.opacity(0.3))
-                            .overlay(
-                                Text("\(workout.estimatedDuration) мин")
-                                    .foregroundColor(.primary)
-                                    .bold()
-                                    .font(.title3)
-                            )
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack {
+                        VStack {
+                            RoundedRectangle(cornerRadius: 5)
+                                .frame(width: 90, height: 45)
+                                .foregroundColor(Color.secondary.opacity(0.3))
+                                .overlay(
+                                    Text("\(workout.estimatedDuration) мин")
+                                        .foregroundColor(.primary)
+                                        .bold()
+                                        .font(.title3)
+                                )
+                        }
+                        VStack {
+                            RoundedRectangle(cornerRadius: 5)
+                                .frame(width: 80, height: 45)
+                                .foregroundColor(Color.secondary.opacity(0.3))
+                                .overlay(
+                                    difficultyIndicator(for: workout.difficulty)
+                                )
+                        }
+                        VStack {
+                            RoundedRectangle(cornerRadius: 5)
+                                .frame(width: 90, height: 45)
+                                .foregroundColor(Color.secondary.opacity(0.3))
+                                .overlay(
+                                    Text("\(workout.workoutsPerWeek) \(pluralForm(for: workout.workoutsPerWeek))")
+                                        .foregroundColor(.primary)
+                                        .bold()
+                                        .font(.title3)
+                                )
+                        }
+                        VStack { // Отображения калорий
+                            RoundedRectangle(cornerRadius: 5)
+                                .frame(width: 110, height: 45)
+                                .foregroundColor(Color.secondary.opacity(0.3))
+                                .overlay(
+                                    Text("\(workout.estimatedCaloriesBurned) ккал")
+                                        .foregroundColor(.primary)
+                                        .bold()
+                                        .font(.title3)
+                                )
+                        }
                     }
-                    Spacer()
-                    VStack {
-                        RoundedRectangle(cornerRadius: 5)
-                            .frame(width: 80, height: 45)
-                            .foregroundColor(Color.secondary.opacity(0.3))
-                            .overlay(
-                                difficultyIndicator(for: workout.difficulty)
-                            )
-                    }
-                    Spacer()
-                    VStack {
-                        RoundedRectangle(cornerRadius: 5)
-                            .frame(width: 90, height: 45)
-                            .foregroundColor(Color.secondary.opacity(0.3))
-                            .overlay(
-                                Text("\(workout.workoutsPerWeek) \(pluralForm(for: workout.workoutsPerWeek))")
-                                    .foregroundColor(.primary)
-                                    .bold()
-                                    .font(.title3)
-                            )
-                    }
-                    Spacer()
                 }
                 
                 Text("Описание:")
@@ -797,7 +836,6 @@ struct WorkoutDetailView: View {
                         .foregroundColor(.primary)
                 }
                 
-                
                 ForEach(workout.exercises, id: \.name) { exercise in
                     VStack(alignment: .leading) {
                         Text(exercise.name)
@@ -816,7 +854,6 @@ struct WorkoutDetailView: View {
                     .background(Color.white)
                     .cornerRadius(10)
                     .shadow(radius: 5)
-                    
                 }
             }
             .padding()
@@ -880,7 +917,6 @@ struct WorkoutDetailView: View {
         }
     }
 }
-
 struct Workout: Codable, Identifiable {
     struct Exercise: Codable {
         let name: String
@@ -902,6 +938,7 @@ struct Workout: Codable, Identifiable {
     let description: String
     let difficulty: String
     let estimatedDuration: Int
+    let estimatedCaloriesBurned: Int // Новое поле для калорий
 }
 
 
